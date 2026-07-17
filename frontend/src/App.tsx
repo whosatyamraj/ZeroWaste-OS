@@ -2,7 +2,10 @@ import { lazy, Suspense } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Leaf } from 'lucide-react';
-import { ProtectedRoute } from '@/components/shared/ProtectedRoute';
+import { PublicRoute, ProtectedRoute, RoleRoute } from '@/components/shared/ProtectedRoute';
+import { AuthLayout } from '@/layouts/AuthLayout';
+import { DashboardLayout } from '@/layouts/DashboardLayout';
+import { UserRole } from '@/types';
 
 // ─── Lazy-loaded Pages ──────────────────────────────────────────────
 const LandingPage = lazy(() => import('@/pages/LandingPage'));
@@ -29,20 +32,15 @@ const SettingsPage = lazy(() => import('@/pages/SettingsPage'));
 function LoadingScreen() {
   return (
     <div className="fixed inset-0 z-[200] flex items-center justify-center bg-background">
-      {/* Ambient glow */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full bg-gradient-to-br from-emerald-500/10 via-cyan-500/5 to-transparent blur-3xl" />
       </div>
 
       <div className="relative flex flex-col items-center gap-6">
-        {/* Spinning ring + logo */}
         <div className="relative">
           <motion.div
             className="w-20 h-20 rounded-full border-[3px] border-transparent"
-            style={{
-              borderTopColor: '#10b981',
-              borderRightColor: 'rgba(16, 185, 129, 0.3)',
-            }}
+            style={{ borderTopColor: '#10b981', borderRightColor: 'rgba(16, 185, 129, 0.3)' }}
             animate={{ rotate: 360 }}
             transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
           />
@@ -56,69 +54,13 @@ function LoadingScreen() {
             </motion.div>
           </div>
         </div>
-
-        {/* Text */}
         <div className="text-center space-y-1.5">
-          <motion.p
-            className="text-sm font-semibold text-foreground tracking-wide"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.2 }}
-          >
-            ZeroWaste OS
-          </motion.p>
-          <motion.p
-            className="text-xs text-muted-foreground"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: [0.4, 1, 0.4] }}
-            transition={{ duration: 1.5, repeat: Infinity, ease: 'easeInOut' }}
-          >
+          <motion.p className="text-sm font-semibold text-foreground tracking-wide">ZeroWaste OS</motion.p>
+          <motion.p className="text-xs text-muted-foreground" animate={{ opacity: [0.4, 1, 0.4] }} transition={{ duration: 1.5, repeat: Infinity }}>
             Loading…
           </motion.p>
         </div>
       </div>
-    </div>
-  );
-}
-
-// ─── 404 Page ───────────────────────────────────────────────────────
-function NotFoundPage() {
-  return (
-    <div className="min-h-screen flex items-center justify-center bg-background px-4">
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-1/3 left-1/2 -translate-x-1/2 w-[500px] h-[500px] rounded-full bg-gradient-to-br from-emerald-500/8 via-cyan-500/5 to-transparent blur-3xl" />
-      </div>
-      <motion.div
-        className="relative text-center space-y-6 max-w-md"
-        initial={{ opacity: 0, y: 30 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
-      >
-        <div className="mx-auto w-20 h-20 rounded-2xl bg-gradient-to-br from-emerald-500/20 to-cyan-500/20 flex items-center justify-center">
-          <span className="text-4xl font-black gradient-text">404</span>
-        </div>
-        <div className="space-y-2">
-          <h1 className="text-2xl font-bold text-foreground">Page not found</h1>
-          <p className="text-sm text-muted-foreground leading-relaxed">
-            The page you're looking for doesn't exist or has been moved.
-          </p>
-        </div>
-        <div className="flex items-center justify-center gap-3">
-          <a
-            href="/"
-            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-emerald-500 to-cyan-500 text-white text-sm font-medium shadow-lg shadow-emerald-500/25 hover:shadow-emerald-500/40 transition-shadow"
-          >
-            <Leaf className="w-4 h-4" />
-            Back to Home
-          </a>
-          <a
-            href="/dashboard"
-            className="inline-flex items-center px-5 py-2.5 rounded-xl border border-border text-sm font-medium text-foreground hover:bg-surface-1 transition-colors"
-          >
-            Dashboard
-          </a>
-        </div>
-      </motion.div>
     </div>
   );
 }
@@ -128,43 +70,65 @@ export default function App() {
   return (
     <Suspense fallback={<LoadingScreen />}>
       <Routes>
-        {/* ── Public Routes ── */}
+        {/* ── Landing Page & Aliases ── */}
         <Route path="/" element={<LandingPage />} />
-        <Route path="/login" element={<LoginPage />} />
-        <Route path="/register" element={<RegisterPage />} />
-        <Route path="/forgot-password" element={<ForgotPasswordPage />} />
-        <Route path="/marketplace" element={<MarketplacePage />} />
-
-        {/* Redirect aliases — scroll to section anchors on the landing page */}
         <Route path="/features" element={<Navigate to="/#features" replace />} />
         <Route path="/pricing" element={<Navigate to="/#pricing" replace />} />
 
-        {/* ── Protected Dashboard Routes ─────────────────────────
-             Each page component renders <DashboardLayout> internally,
-             so we do NOT wrap them again here.
-        ── */}
-        <Route path="/dashboard" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />
-        <Route path="/dashboard/analytics" element={<ProtectedRoute><AnalyticsPage /></ProtectedRoute>} />
-        <Route path="/dashboard/sustainability" element={<ProtectedRoute><SustainabilityPage /></ProtectedRoute>} />
-        <Route path="/dashboard/kitchen" element={<ProtectedRoute><KitchenIntelPage /></ProtectedRoute>} />
-        <Route path="/dashboard/inventory" element={<ProtectedRoute><InventoryPage /></ProtectedRoute>} />
-        <Route path="/dashboard/ai-insights" element={<ProtectedRoute><AIInsightsPage /></ProtectedRoute>} />
+        {/* ── Public Auth Routes ── */}
+        <Route element={<PublicRoute />}>
+          <Route element={<AuthLayout />}>
+            <Route path="/login" element={<LoginPage />} />
+            <Route path="/register" element={<RegisterPage />} />
+            <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+          </Route>
+        </Route>
 
-        {/* ── Community / Portal Routes ── */}
-        <Route path="/ngo" element={<ProtectedRoute><NGOPortalPage /></ProtectedRoute>} />
-        <Route path="/volunteer" element={<ProtectedRoute><VolunteerPortalPage /></ProtectedRoute>} />
+        {/* ── Protected Application Routes ── */}
+        <Route element={<ProtectedRoute />}>
+          
+          {/* Marketplace can be accessed by anyone authenticated (or public if required, but for now protected) */}
+          <Route path="/marketplace" element={<MarketplacePage />} />
+          
+          {/* Dashboard Application Shell */}
+          <Route element={<DashboardLayout />}>
+            
+            {/* General Dashboard (All roles) */}
+            <Route path="/dashboard" element={<DashboardPage />} />
+            <Route path="/profile" element={<ProfilePage />} />
+            <Route path="/settings" element={<SettingsPage />} />
+            
+            {/* Food Business Owner Only */}
+            <Route element={<RoleRoute roles={[UserRole.FoodBusinessOwner, UserRole.Admin]} />}>
+              <Route path="/dashboard/analytics" element={<AnalyticsPage />} />
+              <Route path="/dashboard/sustainability" element={<SustainabilityPage />} />
+              <Route path="/dashboard/kitchen" element={<KitchenIntelPage />} />
+              <Route path="/dashboard/inventory" element={<InventoryPage />} />
+              <Route path="/dashboard/ai-insights" element={<AIInsightsPage />} />
+            </Route>
 
-        {/* ── Admin Routes ── */}
-        <Route path="/admin" element={<ProtectedRoute><AdminPanelPage /></ProtectedRoute>} />
-        <Route path="/admin/users" element={<ProtectedRoute><AdminPanelPage /></ProtectedRoute>} />
-        <Route path="/admin/analytics" element={<ProtectedRoute><AnalyticsPage /></ProtectedRoute>} />
+            {/* NGO Only */}
+            <Route element={<RoleRoute roles={[UserRole.NGOPartner, UserRole.Admin]} />}>
+              <Route path="/ngo" element={<NGOPortalPage />} />
+            </Route>
 
-        {/* ── User Routes ── */}
-        <Route path="/profile" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
-        <Route path="/settings" element={<ProtectedRoute><SettingsPage /></ProtectedRoute>} />
+            {/* Volunteer Only */}
+            <Route element={<RoleRoute roles={[UserRole.Volunteer, UserRole.Admin]} />}>
+              <Route path="/volunteer" element={<VolunteerPortalPage />} />
+            </Route>
+
+            {/* Admin Only */}
+            <Route element={<RoleRoute roles={[UserRole.Admin]} />}>
+              <Route path="/admin" element={<AdminPanelPage />} />
+              <Route path="/admin/users" element={<AdminPanelPage />} />
+              <Route path="/admin/analytics" element={<AnalyticsPage />} />
+            </Route>
+            
+          </Route>
+        </Route>
 
         {/* ── Catch-all 404 ── */}
-        <Route path="*" element={<NotFoundPage />} />
+        <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </Suspense>
   );

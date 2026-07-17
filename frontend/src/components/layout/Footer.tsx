@@ -67,7 +67,6 @@ export function Footer() {
                 placeholder="Enter your email"
                 type="email"
                 className="md:w-64"
-                icon={<Mail className="w-4 h-4" />}
               />
               <Button size="default" className="gap-1 shrink-0">
                 Subscribe <ArrowRight className="w-4 h-4" />
